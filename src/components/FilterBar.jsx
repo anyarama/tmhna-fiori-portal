@@ -1,26 +1,64 @@
-export function FilterBar({ filters, onFilterChange }) {
+export function FilterBar({
+  yearOptions,
+  brandOptions,
+  regionOptions,
+  selectedYear,
+  selectedBrand,
+  selectedRegion,
+  onYearChange,
+  onBrandChange,
+  onRegionChange,
+  disableBrand = false,
+  disableRegion = false,
+}) {
   return (
     <div className="filter-bar">
-      {filters.map((filter) => (
-        <div key={filter.key} className="filter-bar__item">
-          <label className="filter-bar__label" htmlFor={`filter-${filter.key}`}>
-            {filter.label}
-          </label>
+      <div className="filter-group">
+        <label className="filter-label">Fiscal Year</label>
+        <select
+          className="filter-select"
+          value={selectedYear}
+          onChange={(e) => onYearChange(Number(e.target.value))}
+        >
+          {yearOptions.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
+      {!disableBrand && (
+        <div className="filter-group">
+          <label className="filter-label">Brand</label>
           <select
-            id={`filter-${filter.key}`}
-            className="filter-bar__select"
-            value={filter.value}
-            onChange={(e) => onFilterChange(filter.key, e.target.value)}
+            className="filter-select"
+            value={selectedBrand}
+            onChange={(e) => onBrandChange(e.target.value)}
           >
-            {filter.options.map((option) => (
-              <option key={option} value={option}>
-                {option}
+            {brandOptions.map((brand) => (
+              <option key={brand} value={brand}>
+                {brand}
               </option>
             ))}
           </select>
         </div>
-      ))}
+      )}
+      {!disableRegion && (
+        <div className="filter-group">
+          <label className="filter-label">Region</label>
+          <select
+            className="filter-select"
+            value={selectedRegion}
+            onChange={(e) => onRegionChange(e.target.value)}
+          >
+            {regionOptions.map((region) => (
+              <option key={region} value={region}>
+                {region}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   )
 }
-

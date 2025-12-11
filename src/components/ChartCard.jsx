@@ -1,6 +1,6 @@
-export function ChartCard({ title, subtitle, footer, children, className = '' }) {
+export function ChartCard({ title, subtitle, footer, children, className = '', fullWidth }) {
   return (
-    <div className={`chart-card ${className}`}>
+    <div className={`chart-card ${fullWidth ? 'chart-card--full' : ''} ${className}`}>
       <div className="chart-card__header">
         <div>
           <h3 className="chart-card__title">{title}</h3>
@@ -12,4 +12,3 @@ export function ChartCard({ title, subtitle, footer, children, className = '' })
     </div>
   )
 }
-

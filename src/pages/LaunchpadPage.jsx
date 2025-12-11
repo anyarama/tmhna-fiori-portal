@@ -2,137 +2,146 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
   LineChart,
   Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
   PieChart,
   Pie,
   Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
 } from 'recharts'
-import { revenueByBrand, detailedMetrics, getRevenueDistribution } from '../data/financialData.js'
+import { kpiData } from '../data/financialData.js'
+import { compactTooltip } from '../lib/charts.js'
+import { PageHeader } from '../components/PageHeader.jsx'
 
-const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
-
-// Helper: compact tooltip style
-const compactTooltip = {
-  backgroundColor: 'var(--sap-card-bg)',
-  border: '1px solid var(--sap-border)',
-  borderRadius: 'var(--sap-radius-s)',
-  fontSize: '12px',
-}
-
-// Helper component for sections
 function HomeSection({ title, children, className = '' }) {
   return (
-    <div className={`home-section ${className}`}>
+    <section className={`home-section ${className}`}>
       <div className="home-section__header">
         <h2 className="home-section__title">{title}</h2>
       </div>
       {children}
+    </section>
+  )
+}
+
+function HomeTile({ title, subtitle, kpiText, footerText, onClick, children }) {
+  const isInteractive = Boolean(onClick)
+
+  return (
+    <div
+      className={`fiori-tile ${isInteractive ? 'fiori-tile--interactive' : ''}`}
+      onClick={onClick}
+      role={isInteractive ? 'button' : 'group'}
+      tabIndex={isInteractive ? 0 : -1}
+      onKeyDown={
+        isInteractive
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
+    >
+      <div className="fiori-tile__header">
+        <div className="fiori-tile__title">{title}</div>
+        {subtitle && <div className="fiori-tile__subtitle">{subtitle}</div>}
+      </div>
+      {kpiText && <div className="fiori-tile__kpi">{kpiText}</div>}
+      {children}
+      {footerText && <div className="fiori-tile__footer">{footerText}</div>}
     </div>
   )
 }
 
-// Helper component for tiles
-function HomeTile({ title, subtitle, kpiText, footerText, children, onClick, className = '' }) {
-  return (
-    <div
-      className={`fiori-tile workspace-tile ${className}`}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : -1}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault()
-          onClick()
-        }
-      }}
-    >
-      <div className="fiori-tile__content">
-        <h3 className="fiori-tile__title">{title}</h3>
-        {subtitle && <p className="fiori-tile__subtitle">{subtitle}</p>}
-        {kpiText && <div className="workspace-tile__kpi">{kpiText}</div>}
-        {children}
-        {footerText && <div className="fiori-tile__footer">{footerText}</div>}
-      </div>
-    </div>
-  )
-}
+const revenueTrend = [
+  { name: 'Q1', value: 1.6 },
+  { name: 'Q2', value: 1.8 },
+  { name: 'Q3', value: 1.9 },
+  { name: 'Q4', value: 1.95 },
+]
 
 export default function LaunchpadPage() {
   const navigate = useNavigate()
 
-  // Revenue trend for micro sparkline (My Finance Overview)
-  const revenueTrend = useMemo(() => {
-    const brandData = revenueByBrand[2024].All
-    return Object.entries(brandData).map(([name, value]) => ({ name, value }))
+  const currentYearKpis = useMemo(() => {
+    const latestYear = Math.max(...Object.keys(kpiData).map((y) => Number(y)))
+    return kpiData[latestYear]
   }, [])
 
-  // Top dealers for margin list (use detailedMetrics)
-  const topDealers = useMemo(() => {
-    return [...detailedMetrics]
-      .sort((a, b) => b.operatingMargin - a.operatingMargin)
-      .slice(0, 3)
-      .map((item) => ({
-        name: item.dealer.length > 22 ? `${item.dealer.slice(0, 22)}…` : item.dealer,
-        margin: item.operatingMargin,
-      }))
-  }, [])
+  // Cost center budget data for pie chart
+  const costCenterPreview = {
+    consumed: 68,
+    budget: 100,
+  }
 
-  // Inventory/backlog preview
-  const inventoryPreview = { current: 78, target: 90 }
+  const costCenterPieData = [
+    { name: 'Consumed', value: costCenterPreview.consumed },
+    { name: 'Remaining', value: costCenterPreview.budget - costCenterPreview.consumed },
+  ]
 
-  // Cost center preview
-  const costCenterPreview = { consumed: 68, budget: 100 }
+  // Inventory and backlog progress data
+  const inventoryPreview = {
+    current: 76,
+    target: 85,
+  }
 
   return (
     <div className="fiori-home">
-      <div className="fiori-home__content">
-        {/* Persona subtitle */}
-        <p className="fiori-home__subtitle">Emma&apos;s personalized workspace for TMHNA financial intelligence.</p>
+      <PageHeader
+        title="My Home"
+        subtitle="Emma's personalized workspace for TMHNA financial intelligence"
+      />
 
-        {/* Top row: News banner */}
+      <div className="fiori-home__content">
+        {/* Top banner */}
         <div className="tile-grid tile-grid--wide top-banner-row">
-          <div className="fiori-tile fiori-tile--wide fiori-tile--news">
-            <div className="fiori-tile__media">
-              <div className="fiori-tile__media-placeholder">Financial Intelligence Update</div>
-            </div>
-            <div className="fiori-tile__content">
-              <h3 className="fiori-tile__title">Q4 Financial Performance Exceeds Targets</h3>
-              <p className="fiori-tile__subtitle">
-                TMHNA exceeded Q4 targets across TMH, Raymond, and THD with stronger operating margins and backlog
-                reduction.
+          <div className="fiori-tile fiori-tile--news">
+            <div className="fiori-tile--news__media" />
+            <div className="fiori-tile--news__body">
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  color: 'var(--sap-text-muted)',
+                  marginBottom: '8px',
+                }}
+              >
+                Financial Intelligence Update
+              </div>
+              <div className="fiori-tile__title">Q4 Financial Performance Exceeds Targets</div>
+              <p className="fiori-tile--news__text">
+                TMHNA delivered strong Q4 results across TMH, Raymond, and Toyota Heavy Duty brands.
+                Outperformance driven by improved backlog conversion and margin discipline, with
+                unified revenue reaching $7.2B YTD.
               </p>
-              <div className="fiori-tile__footer">Today, TMHNA News · December 10, 2024</div>
+              <div className="fiori-tile__footer">Today, TMHNA News – December 10, 2024</div>
             </div>
           </div>
         </div>
 
-        {/* Section 1: My Workspace */}
-        <HomeSection title="My Workspace">
-          <div className="tile-grid tile-grid--wide">
+        {/* My Workspace */}
+        <HomeSection title="My Workspace" className="home-section--workspace">
+          <div className="tile-grid workspace-grid">
             <HomeTile
               title="My Finance Overview"
-              subtitle="Revenue trend by brand"
+              subtitle="Unified revenue trend across TMH, Raymond, and THD"
               kpiText="7.2B Revenue YTD"
               footerText="Fiscal Year 2024"
             >
               <div className="workspace-tile__chart">
                 <ResponsiveContainer width="100%" height={70}>
                   <LineChart data={revenueTrend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--sap-border)" />
                     <XAxis dataKey="name" hide />
                     <YAxis hide />
-                    <Tooltip
-                      contentStyle={{ display: 'none' }}
-                      cursor={false}
-                      isAnimationActive={false}
-                    />
+                    <Tooltip contentStyle={compactTooltip} formatter={(v) => `$${v.toFixed(1)}B`} />
                     <Line
                       type="monotone"
                       dataKey="value"
@@ -147,45 +156,56 @@ export default function LaunchpadPage() {
 
             <HomeTile
               title="My Tasks"
-              subtitle="All items"
+              subtitle="Finance tasks requiring attention"
               kpiText="13 Outstanding Tasks"
-              footerText="Last updated: Today"
+              footerText="3 due this week"
             >
-              <div className="workspace-tile__meta">Most urgent: 3 due this week</div>
-            </HomeTile>
-
-            <HomeTile title="Key Alerts" kpiText="3 Open Alerts" footerText="Requires attention">
               <div className="workspace-tile__meta">
-                <span className="alert-critical">2 Critical</span> · <span className="alert-warning">1 Warning</span>
+                Journal approvals, dealer rebate approvals, backlog review, and month-end close
+                activities pending across TMHNA finance operations.
               </div>
             </HomeTile>
 
-            <HomeTile title="My Timesheet" kpiText="10 Days Missing" footerText="Submit by end of month">
-              <div className="workspace-tile__meta">Current period: Dec 2024</div>
+            <HomeTile title="Key Alerts" kpiText="3 Open Alerts" footerText="Continuous monitoring">
+              <div className="workspace-tile__meta">
+                <span className="text-critical">2 critical</span> margin exceptions and{' '}
+                <span className="text-warning">1 warning</span> on backlog aging surfaced by the
+                unified financial data model across TMH, Raymond, and THD.
+              </div>
+            </HomeTile>
+
+            <HomeTile
+              title="Close Calendar"
+              subtitle="Month-end close timeline"
+              kpiText="10 Days to Close"
+              footerText="Target: Close in 3 days"
+            >
+              <div className="workspace-tile__meta">
+                December 2024 month-end close in progress. TMHNA targets a shorter close cycle to
+                accelerate financial reporting across unified brands.
+              </div>
             </HomeTile>
           </div>
         </HomeSection>
 
-        {/* Section 2: Financial Intelligence */}
-        <HomeSection title="Financial Intelligence">
-          <div className="tile-grid">
+        {/* Financial Intelligence */}
+        <HomeSection title="Financial Intelligence" className="home-section--financial">
+          <div className="tile-grid fi-grid">
             <HomeTile
               title="Financial Intelligence Dashboard"
-              subtitle="Revenue by brand (preview)"
+              subtitle="Cross-brand revenue (preview from unified model)"
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
               <div className="workspace-tile__chart">
                 <ResponsiveContainer width="100%" height={70}>
-                  <BarChart data={revenueTrend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--sap-border)" />
+                  <BarChart
+                    data={revenueTrend}
+                    margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+                  >
                     <XAxis dataKey="name" hide />
                     <YAxis hide />
-                    <Tooltip
-                      contentStyle={{ display: 'none' }}
-                      cursor={false}
-                      isAnimationActive={false}
-                    />
+                    <Tooltip contentStyle={compactTooltip} formatter={(v) => `$${v.toFixed(1)}B`} />
                     <Bar dataKey="value" fill="var(--sap-accent)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -194,30 +214,21 @@ export default function LaunchpadPage() {
 
             <HomeTile
               title="Dealer Margin Analysis"
-              subtitle="Top dealer margins"
+              subtitle="Top dealer margins (illustrative)"
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__preview">
-                <div className="workspace-tile__list">
-                  {topDealers.map((d, idx) => (
-                    <div key={idx} className="dealer-row">
-                      <div className="dealer-row__left">
-                        <span className="dealer-rank">#{idx + 1}</span>
-                        <span className="dealer-name">{d.name}</span>
-                      </div>
-                      <div className="dealer-row__right">
-                        <div className="dealer-margin-bar">
-                          <div
-                            className="dealer-margin-bar__fill"
-                            style={{ width: `${(d.margin / 20) * 100}%` }}
-                          />
-                        </div>
-                        <span className="dealer-margin">{d.margin.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <ul className="workspace-tile__list">
+                <li>
+                  Dealer 1041 (TMH) – <span className="text-good">18.4% margin</span>
+                </li>
+                <li>
+                  Dealer 2057 (Raymond) – <span className="text-good">17.9% margin</span>
+                </li>
+                <li>Dealer 3120 (THD) – 16.8% margin</li>
+              </ul>
+              <div className="workspace-tile__meta" style={{ marginTop: '8px' }}>
+                High-margin dealers across TMH and Raymond brands.
               </div>
             </HomeTile>
 
@@ -227,19 +238,40 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__preview">
-                <div className="workspace-tile__progress">
-                  <div className="progress-bar">
-                    <div
-                      className="progress-bar__fill"
-                      style={{ width: `${(inventoryPreview.current / inventoryPreview.target) * 100}%` }}
-                    />
-                  </div>
-                  <div className="workspace-tile__meta">
-                    <span className="inventory-current">Current: {inventoryPreview.current}%</span>
-                    <span className="inventory-target">Target: {inventoryPreview.target}%</span>
-                  </div>
+              <div style={{ marginTop: '8px', marginBottom: '8px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '12px',
+                    color: 'var(--sap-text-muted)',
+                    marginBottom: '4px',
+                  }}
+                >
+                  <span>Current: {inventoryPreview.current}%</span>
+                  <span>Target: {inventoryPreview.target}%</span>
                 </div>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '8px',
+                    backgroundColor: 'var(--sap-border-subtle)',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${(inventoryPreview.current / inventoryPreview.target) * 100}%`,
+                      height: '100%',
+                      backgroundColor: 'var(--sap-accent)',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="workspace-tile__meta">
+                Backlog conversion improving; spotlight on aligning Raymond lead times with TMH.
               </div>
             </HomeTile>
 
@@ -249,36 +281,44 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__preview">
-                <div className="workspace-tile__donut">
-                  <div className="donut-chart-mini">
-                    <svg viewBox="0 0 100 100" className="donut-svg">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="none"
-                        stroke="var(--sap-border)"
-                        strokeWidth="8"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="none"
-                        stroke="var(--sap-accent)"
-                        strokeWidth="8"
-                        strokeDasharray={`${costCenterPreview.consumed * 2.51} ${251 - costCenterPreview.consumed * 2.51}`}
-                        strokeDashoffset="62.75"
-                        transform="rotate(-90 50 50)"
-                      />
-                    </svg>
-                    <div className="donut-label">{costCenterPreview.consumed}%</div>
-                  </div>
-                  <div className="workspace-tile__meta">
-                    <span className="budget-consumed">of budget consumed</span>
-                  </div>
+              <div
+                className="workspace-tile__chart"
+                style={{ position: 'relative', height: '100px', marginTop: '8px' }}
+              >
+                <ResponsiveContainer width="100%" height={100}>
+                  <PieChart>
+                    <Pie
+                      data={costCenterPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={28}
+                      outerRadius={40}
+                      startAngle={90}
+                      endAngle={-270}
+                      dataKey="value"
+                    >
+                      <Cell key="consumed" fill="var(--sap-accent)" />
+                      <Cell key="remaining" fill="var(--sap-border-subtle)" />
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: 'var(--sap-text-main)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {costCenterPreview.consumed}%
                 </div>
+              </div>
+              <div className="workspace-tile__meta" style={{ marginTop: '8px' }}>
+                {costCenterPreview.consumed}% of annual SG&A budget consumed
               </div>
             </HomeTile>
           </div>
@@ -287,4 +327,3 @@ export default function LaunchpadPage() {
     </div>
   )
 }
-

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-export function DataTable({ data, columns }) {
+export function DataTable({ data, rows, columns }) {
+  const tableData = rows || data || []
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
 
   const handleSort = (key) => {
@@ -11,7 +12,7 @@ export function DataTable({ data, columns }) {
     setSortConfig({ key, direction })
   }
 
-  const sortedData = [...data].sort((a, b) => {
+  const sortedData = [...tableData].sort((a, b) => {
     if (!sortConfig.key) return 0
 
     const aValue = a[sortConfig.key]
@@ -67,4 +68,3 @@ export function DataTable({ data, columns }) {
     </div>
   )
 }
-

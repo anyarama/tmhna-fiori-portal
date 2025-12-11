@@ -32,33 +32,71 @@ export function AppLayout() {
     <div className="app-layout">
       <header className="shell-bar">
         <div className="shell-bar__left">
-          <Link to="/launchpad" className="app-title" aria-label="SAP Home">
-            <img src={sapLogo} alt="SAP Logo" className="app-title__logo" />
+          <Link to="/launchpad" className="shell-logo">
+            <img src={sapLogo} alt="SAP" className="sap-logo" />
+            <span className="app-title">TMHNA Financial Intelligence Portal</span>
           </Link>
+
+          <nav className="shell-nav">
+            <NavLink
+              to="/launchpad"
+              end
+              className={({ isActive }) =>
+                isActive ? 'shell-nav__item shell-nav__item--active' : 'shell-nav__item'
+              }
+            >
+              My Home
+            </NavLink>
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                isActive ? 'shell-nav__item shell-nav__item--active' : 'shell-nav__item'
+              }
+            >
+              Financial Dashboards
+            </NavLink>
+            <NavLink
+              to="/dealer-analytics"
+              className={({ isActive }) =>
+                isActive ? 'shell-nav__item shell-nav__item--active' : 'shell-nav__item'
+              }
+            >
+              Dealer Analytics
+            </NavLink>
+          </nav>
         </div>
+
         <div className="shell-bar__center">
           <div className="global-search">
             <input
               type="search"
-              placeholder="Search..."
+              placeholder="Search across TMHNA financial content"
               className="global-search__input"
               aria-label="Global search"
             />
           </div>
         </div>
+
         <div className="shell-bar__right">
+          <button className="shell-icon-button" type="button" aria-label="Notifications">
+            <span className="icon-bell" />
+          </button>
+          <button className="shell-icon-button" type="button" aria-label="Help">
+            <span className="icon-help" />
+          </button>
           <div className="user-menu" ref={userMenuRef}>
             <button
+              className="user-chip user-chip--clickable"
               type="button"
-              className="user-menu__trigger"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               aria-expanded={userMenuOpen}
               aria-haspopup="true"
             >
-              <div className="user-avatar">
-                <span className="user-avatar__initials">JD</span>
+              <div className="user-avatar">E</div>
+              <div className="user-meta">
+                <div className="user-name">Emma Johnson</div>
+                <div className="user-role">TMHNA Finance</div>
               </div>
-              <span className="user-name">John Doe</span>
               <svg
                 className="user-menu__arrow"
                 width="12"
@@ -79,22 +117,41 @@ export function AppLayout() {
             {userMenuOpen && (
               <div className="user-menu__dropdown">
                 <div className="user-menu__header">
-                  <div className="user-avatar user-avatar--large">
-                    <span className="user-avatar__initials">JD</span>
-                  </div>
+                  <div className="user-avatar user-avatar--large">E</div>
                   <div className="user-menu__info">
-                    <div className="user-menu__name">John Doe</div>
-                    <div className="user-menu__email">john.doe@tmhna.com</div>
+                    <div className="user-menu__name">Emma Johnson</div>
+                    <div className="user-menu__email">emma.johnson@tmhna.com</div>
                   </div>
                 </div>
                 <div className="user-menu__divider" />
-                <button type="button" className="user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                <button
+                  type="button"
+                  className="user-menu__item"
+                  onClick={() => {
+                    setUserMenuOpen(false)
+                    // Navigate to profile page if exists
+                  }}
+                >
                   <span>My Profile</span>
                 </button>
-                <button type="button" className="user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                <button
+                  type="button"
+                  className="user-menu__item"
+                  onClick={() => {
+                    setUserMenuOpen(false)
+                    // Navigate to settings page if exists
+                  }}
+                >
                   <span>Settings</span>
                 </button>
-                <button type="button" className="user-menu__item" onClick={() => setUserMenuOpen(false)}>
+                <button
+                  type="button"
+                  className="user-menu__item"
+                  onClick={() => {
+                    setUserMenuOpen(false)
+                    // Navigate to preferences page if exists
+                  }}
+                >
                   <span>Preferences</span>
                 </button>
                 <div className="user-menu__divider" />
@@ -106,34 +163,6 @@ export function AppLayout() {
           </div>
         </div>
       </header>
-
-      {/* Global navigation tabs (Fiori shell tab row) */}
-      <nav className="shell-tabs" aria-label="Global navigation">
-        <NavLink
-          to="/launchpad"
-          className={({ isActive }) =>
-            `shell-tabs__item ${isActive ? 'shell-tabs__item--active' : ''}`
-          }
-        >
-          My Home
-        </NavLink>
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `shell-tabs__item ${isActive ? 'shell-tabs__item--active' : ''}`
-          }
-        >
-          Financial Dashboards
-        </NavLink>
-        <NavLink
-          to="/dealer-analytics"
-          className={({ isActive }) =>
-            `shell-tabs__item ${isActive ? 'shell-tabs__item--active' : ''}`
-          }
-        >
-          Dealer Analytics
-        </NavLink>
-      </nav>
 
       <main className="app-layout__content">
         <div className="content-container">
