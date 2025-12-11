@@ -29,12 +29,12 @@ function HomeSection({ title, children, className = '' }) {
   )
 }
 
-function HomeTile({ title, subtitle, kpiText, footerText, onClick, children }) {
+function HomeTile({ title, subtitle, kpiText, footerText, onClick, children, className = '' }) {
   const isInteractive = Boolean(onClick)
 
   return (
     <div
-      className={`fiori-tile ${isInteractive ? 'fiori-tile--interactive' : ''}`}
+      className={`fiori-tile ${isInteractive ? 'fiori-tile--interactive' : ''} ${className}`}
       onClick={onClick}
       role={isInteractive ? 'button' : 'group'}
       tabIndex={isInteractive ? 0 : -1}
@@ -178,7 +178,7 @@ export default function LaunchpadPage() {
               </div>
             </HomeTile>
 
-            <HomeTile title="Key Alerts" kpiText="3 Open Alerts" footerText="Continuous monitoring">
+            <HomeTile title="Key Alerts" kpiText="3 Open Alerts" footerText="Continuous monitoring" className="tile--custom-header">
               <div className="tile-title-row tile-title-row--override">
                 <span className="fiori-tile__title">Key Alerts</span>
                 <span className="status-chip status-chip--critical">At Risk</span>
@@ -191,8 +191,9 @@ export default function LaunchpadPage() {
               title="Close Calendar"
               subtitle="Month-end close timeline"
               kpiText="10 Days to Close"
+              footerText="Target: Close in 3 days"
             >
-              <div className="workspace-tile__meta" style={{ marginTop: '0' }}>
+              <div className="workspace-tile__meta workspace-tile__meta--compact">
                 <div>Current period: Dec 2024</div>
                 <div>Target close: 3 days</div>
               </div>
@@ -213,7 +214,7 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__chart" style={{ marginTop: '8px', marginBottom: '0' }}>
+              <div className="workspace-tile__chart workspace-tile__chart--standard">
                 <ResponsiveContainer width="100%" height={70}>
                   <BarChart
                     data={revenueTrend}
@@ -226,7 +227,7 @@ export default function LaunchpadPage() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="workspace-tile__meta" style={{ marginTop: '4px', marginBottom: '0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="workspace-tile__meta workspace-tile__meta--growth">
                 <span>YTD growth vs prior year:</span>
                 <span className="growth-metric growth-metric--positive">
                   <span className="growth-metric__icon">↑</span>
@@ -241,20 +242,20 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__chart" style={{ marginTop: '8px', height: '130px' }}>
+              <div className="workspace-tile__chart workspace-tile__chart--tall">
                 <ResponsiveContainer width="100%" height={130}>
                   <BarChart
                     data={dealerMarginPreview}
                     layout="vertical"
-                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                    margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
                   >
                     <XAxis type="number" hide />
                     <YAxis
                       type="category"
                       dataKey="name"
                       tick={{ fontSize: 11 }}
-                      width={45}
-                      tickMargin={8}
+                      width={48}
+                      tickMargin={4}
                     />
                     <Tooltip
                       contentStyle={compactTooltip}
@@ -297,19 +298,23 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__meta" style={{ marginTop: '0', marginBottom: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div className="workspace-tile__meta workspace-tile__meta--compact workspace-tile__meta--spaced">
+                <div className="workspace-tile__meta-row">
                   <span>Current: {inventoryPreview.current}%</span>
                   <span>Target: {inventoryPreview.target}%</span>
                 </div>
               </div>
-              <div className="progress-bar">
+              <div className="progress-bar progress-bar--with-target">
                 <div
                   className={`progress-bar__fill ${inventoryPreview.current >= inventoryPreview.target ? 'progress-bar__fill--success' : inventoryPreview.current >= inventoryPreview.target * 0.9 ? 'progress-bar__fill--warning' : 'progress-bar__fill--danger'}`}
                   style={{ width: `${inventoryPreview.current}%` }}
                 />
+                <div
+                  className="progress-bar__target"
+                  style={{ left: `${inventoryPreview.target}%` }}
+                />
               </div>
-              <div className="workspace-tile__meta" style={{ marginTop: '6px', marginBottom: '0' }}>
+              <div className="workspace-tile__meta workspace-tile__meta--spaced">
                 Backlog conversion improving. Aligning Raymond lead times with TMH.
               </div>
             </HomeTile>
@@ -320,10 +325,7 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div
-                className="workspace-tile__chart"
-                style={{ position: 'relative', height: '120px', marginTop: '8px', marginBottom: '0' }}
-              >
+              <div className="workspace-tile__chart workspace-tile__chart--donut">
                 <ResponsiveContainer width="100%" height={120}>
                   <PieChart>
                     <Pie
@@ -341,24 +343,9 @@ export default function LaunchpadPage() {
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: '20px',
-                    fontWeight: 700,
-                    color: 'var(--sap-text-main)',
-                    pointerEvents: 'none',
-                    textAlign: 'center',
-                    lineHeight: '1.2',
-                  }}
-                >
-                  <div>{costCenterPreview.consumed}%</div>
-                  <div style={{ fontSize: '11px', fontWeight: 400, color: 'var(--sap-text-muted)', marginTop: '2px' }}>
-                    Consumed
-                  </div>
+                <div className="donut-chart-center">
+                  <div className="donut-chart-center__value">{costCenterPreview.consumed}%</div>
+                  <div className="donut-chart-center__label">Consumed</div>
                 </div>
               </div>
               <div className="donut-legend">
