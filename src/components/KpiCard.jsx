@@ -26,7 +26,6 @@ export function KpiCard({ label, value, unit, change, changeLabel, helper }) {
       <div className="kpi-card__label">{label}</div>
       <div className="kpi-card__value">
         {formatValue()}
-        {unit && <span> {unit}</span>}
       </div>
       {helper && (
         <div className="kpi-card__helper" style={{ fontSize: '12px', color: 'var(--sap-text-muted)', marginTop: '4px' }}>
@@ -34,7 +33,8 @@ export function KpiCard({ label, value, unit, change, changeLabel, helper }) {
         </div>
       )}
       <div className={`kpi-card__delta kpi-card__delta--${changeClass}`}>
-        <span>{formatChange()}</span> {changeLabel}
+        <span className="kpi-card__delta-value">{formatChange()}</span>
+        <span className="kpi-card__delta-label">{changeLabel}</span>
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ import {
 import { kpiData } from '../data/financialData.js'
 import { compactTooltip } from '../lib/charts.js'
 import { PageHeader } from '../components/PageHeader.jsx'
+import newsImage from '/shutterstock_2560233213.jpg'
 
 function HomeSection({ title, children, className = '' }) {
   return (
@@ -31,10 +32,11 @@ function HomeSection({ title, children, className = '' }) {
 
 function HomeTile({ title, subtitle, kpiText, footerText, onClick, children, className = '' }) {
   const isInteractive = Boolean(onClick)
+  const isLinkFooter = isInteractive && footerText && footerText.toLowerCase().includes('dashboard')
 
   return (
     <div
-      className={`fiori-tile ${isInteractive ? 'fiori-tile--interactive' : ''} ${className}`}
+      className={`fiori-tile ${isInteractive ? 'fiori-tile--interactive clickable-tile' : ''} ${className}`}
       onClick={onClick}
       role={isInteractive ? 'button' : 'group'}
       tabIndex={isInteractive ? 0 : -1}
@@ -55,7 +57,12 @@ function HomeTile({ title, subtitle, kpiText, footerText, onClick, children, cla
       </div>
       {kpiText && <div className="fiori-tile__kpi">{kpiText}</div>}
       {children}
-      {footerText && <div className="fiori-tile__footer">{footerText}</div>}
+      {footerText && (
+        <div className={`tile-footer ${isLinkFooter ? 'tile-footer--link' : ''}`}>
+          <span>{footerText}</span>
+          {isLinkFooter && <span className="tile-footer__icon">›</span>}
+        </div>
+      )}
     </div>
   )
 }
@@ -103,14 +110,17 @@ export default function LaunchpadPage() {
     <div className="fiori-home">
       <PageHeader
         title="My Home"
-        subtitle="Emma's personalized workspace for TMHNA financial intelligence"
+        subtitle="TMHNA Financial Intelligence Portal • Emma's personalized workspace"
       />
 
       <div className="fiori-home__content">
         {/* Top banner */}
         <div className="tile-grid tile-grid--wide top-banner-row">
           <div className="fiori-tile fiori-tile--news">
-            <div className="fiori-tile--news__media" />
+            <div className="fiori-tile--news__media">
+              <img src={newsImage} alt="Financial Performance" className="fiori-tile--news__image" />
+              <div className="fiori-tile--news__overlay" />
+            </div>
             <div className="fiori-tile--news__body">
               <div
                 style={{
@@ -140,25 +150,35 @@ export default function LaunchpadPage() {
           <div className="tile-grid workspace-grid">
             <HomeTile
               title="My Finance Overview"
-              subtitle="Unified revenue trend across TMH, Raymond, and THD"
               kpiText="7.2B Revenue YTD"
               footerText="Fiscal Year 2024"
+              className="finance-overview-tile"
             >
-              <p className="workspace-tile__meta">
-                TMH: $3.5B • Raymond: $2.3B • THD: $1.4B
-              </p>
-              <div className="workspace-tile__chart">
-                <ResponsiveContainer width="100%" height={70}>
-                  <LineChart data={revenueTrend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                    <XAxis dataKey="name" hide />
-                    <YAxis hide />
+              <div className="finance-sparkline">
+                <ResponsiveContainer width="100%" height={110}>
+                  <LineChart data={revenueTrend} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      height={18}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={42}
+                      tickFormatter={(v) => `$${v.toFixed(1)}B`}
+                    />
                     <Tooltip contentStyle={compactTooltip} formatter={(v) => `$${v.toFixed(1)}B`} />
                     <Line
                       type="monotone"
                       dataKey="value"
                       stroke="var(--sap-accent)"
-                      strokeWidth={2}
-                      dot={{ r: 2, fill: 'var(--sap-accent)' }}
+                      strokeWidth={2.5}
+                      dot={{ r: 3.5, fill: 'var(--sap-accent)' }}
+                      activeDot={{ r: 5 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -178,9 +198,14 @@ export default function LaunchpadPage() {
               </div>
             </HomeTile>
 
-            <HomeTile title="Key Alerts" kpiText="3 Open Alerts" footerText="Continuous monitoring" className="tile--custom-header">
-              <div className="tile-title-row tile-title-row--override">
-                <span className="fiori-tile__title">Key Alerts</span>
+            <HomeTile
+              title="Key Alerts"
+              subtitle="Margin and backlog warnings"
+              kpiText="3 Open Alerts"
+              footerText="Continuous monitoring"
+              className="tile--with-status-chip"
+            >
+              <div className="tile-status-chip-wrapper">
                 <span className="status-chip status-chip--critical">At Risk</span>
               </div>
               <div className="alert-line alert-line--critical">2 critical margin exceptions</div>
@@ -197,10 +222,10 @@ export default function LaunchpadPage() {
                 <div>Current period: Dec 2024</div>
                 <div>Target close: 3 days</div>
               </div>
-              <div className="progress-bar">
-                <div className="progress-bar__fill" style={{ width: '60%' }} />
+              <div className="kpi-progress">
+                <div className="kpi-progress__fill" style={{ width: '60%' }} />
               </div>
-              <div className="progress-bar__label">60% of close window elapsed</div>
+              <div className="kpi-progress__label">60% of close window elapsed</div>
             </HomeTile>
           </div>
         </HomeSection>
@@ -210,7 +235,7 @@ export default function LaunchpadPage() {
           <div className="tile-grid fi-grid">
             <HomeTile
               title="Financial Intelligence Dashboard"
-              subtitle="Cross-brand revenue (preview from unified model)"
+              subtitle="Cross-brand revenue (unified model preview)"
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
@@ -242,53 +267,55 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__chart workspace-tile__chart--tall">
-                <ResponsiveContainer width="100%" height={130}>
-                  <BarChart
-                    data={dealerMarginPreview}
-                    layout="vertical"
-                    margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
-                  >
-                    <XAxis type="number" hide />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      tick={{ fontSize: 11 }}
-                      width={48}
-                      tickMargin={4}
-                    />
-                    <Tooltip
-                      contentStyle={compactTooltip}
-                      formatter={(v) => `${Number(v).toFixed(1)}%`}
-                    />
-                    <Bar
-                      dataKey="margin"
-                      radius={[0, 4, 4, 0]}
-                      shape={(props) => {
-                        const { payload, x, y, width, height } = props
-                        const fillColor = payload?.color || 'var(--sap-accent)'
-                        return (
-                          <rect
-                            x={x}
-                            y={y}
-                            width={width}
-                            height={height}
-                            fill={fillColor}
-                            rx={4}
-                            ry={4}
-                          />
-                        )
-                      }}
+              <div className="dealer-margin-chart-container">
+                <div className="dealer-margin-chart">
+                  <ResponsiveContainer width="100%" height={130}>
+                    <BarChart
+                      data={dealerMarginPreview}
+                      layout="vertical"
+                      margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
                     >
-                      <LabelList
-                        dataKey="margin"
-                        position="right"
-                        formatter={(v) => `${Number(v).toFixed(1)}%`}
-                        style={{ fontSize: '11px', fill: 'var(--sap-text-secondary)', fontWeight: 500 }}
+                      <XAxis type="number" hide />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        tick={{ fontSize: 11 }}
+                        width={48}
+                        tickMargin={4}
                       />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                      <Tooltip
+                        contentStyle={compactTooltip}
+                        formatter={(v) => `${Number(v).toFixed(1)}%`}
+                      />
+                      <Bar
+                        dataKey="margin"
+                        radius={[0, 4, 4, 0]}
+                        shape={(props) => {
+                          const { payload, x, y, width, height } = props
+                          const fillColor = payload?.color || 'var(--sap-accent)'
+                          return (
+                            <rect
+                              x={x}
+                              y={y}
+                              width={width}
+                              height={height}
+                              fill={fillColor}
+                              rx={4}
+                              ry={4}
+                            />
+                          )
+                        }}
+                      >
+                        <LabelList
+                          dataKey="margin"
+                          position="right"
+                          formatter={(v) => `${Number(v).toFixed(1)}%`}
+                          style={{ fontSize: '11px', fill: 'var(--sap-text-secondary)', fontWeight: 500 }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </HomeTile>
 
@@ -298,23 +325,26 @@ export default function LaunchpadPage() {
               footerText="Go to dashboard"
               onClick={() => navigate('/dashboard')}
             >
-              <div className="workspace-tile__meta workspace-tile__meta--compact workspace-tile__meta--spaced">
+              <div className="workspace-tile__meta workspace-tile__meta--compact">
                 <div className="workspace-tile__meta-row">
                   <span>Current: {inventoryPreview.current}%</span>
                   <span>Target: {inventoryPreview.target}%</span>
                 </div>
               </div>
-              <div className="progress-bar progress-bar--with-target">
+              <div className="kpi-progress kpi-progress--with-target">
                 <div
-                  className={`progress-bar__fill ${inventoryPreview.current >= inventoryPreview.target ? 'progress-bar__fill--success' : inventoryPreview.current >= inventoryPreview.target * 0.9 ? 'progress-bar__fill--warning' : 'progress-bar__fill--danger'}`}
+                  className={`kpi-progress__fill ${inventoryPreview.current >= inventoryPreview.target ? 'kpi-progress__fill--success' : inventoryPreview.current >= inventoryPreview.target * 0.9 ? 'kpi-progress__fill--warning' : 'kpi-progress__fill--danger'}`}
                   style={{ width: `${inventoryPreview.current}%` }}
                 />
                 <div
-                  className="progress-bar__target"
+                  className="kpi-progress__target"
                   style={{ left: `${inventoryPreview.target}%` }}
                 />
               </div>
-              <div className="workspace-tile__meta workspace-tile__meta--spaced">
+              <div className="kpi-progress__label">
+                Current: {inventoryPreview.current}% of target ({inventoryPreview.target}%)
+              </div>
+              <div className="tile-body-text">
                 Backlog conversion improving. Aligning Raymond lead times with TMH.
               </div>
             </HomeTile>

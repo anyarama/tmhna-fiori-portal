@@ -34,7 +34,6 @@ export function AppLayout() {
         <div className="shell-bar__left">
           <Link to="/launchpad" className="shell-logo">
             <img src={sapLogo} alt="SAP" className="sap-logo" />
-            <span className="app-title">TMHNA Financial Intelligence Portal</span>
           </Link>
 
           <nav className="shell-nav">

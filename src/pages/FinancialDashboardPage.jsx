@@ -13,6 +13,8 @@ import {
   Pie,
   Cell,
   Legend,
+  ComposedChart,
+  Label,
 } from 'recharts'
 import {
   fiscalYears,
@@ -99,6 +101,17 @@ export default function FinancialDashboardPage() {
   const revenueDistribution = useMemo(() => {
     return getRevenueDistribution(selectedYear, selectedBrand, selectedRegion)
   }, [selectedYear, selectedBrand, selectedRegion])
+
+  // Backlog and DSO by brand for combo chart
+  const backlogAndDsoByBrand = useMemo(() => {
+    // Static data structure for working capital view by brand
+    // Backlog in USD millions, DSO in days
+    return [
+      { brand: 'TMH', backlogUSD: 1300, dsoDays: 44 },
+      { brand: 'Raymond', backlogUSD: 900, dsoDays: 49 },
+      { brand: 'THD', backlogUSD: 600, dsoDays: 38 },
+    ]
+  }, [selectedYear])
 
   // Top dealers by revenue for preview
   const topDealers = useMemo(() => {
@@ -256,17 +269,17 @@ export default function FinancialDashboardPage() {
           subtitle={`Share of total revenue – Fiscal Year ${selectedYear}`}
         >
           <div className="pie-chart-container">
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                 <Pie
                   data={revenueMixByBrand}
                   dataKey="value"
                   nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={45}
-                  outerRadius={70}
-                  paddingAngle={3}
+                  innerRadius="55%"
+                  outerRadius="80%"
+                  paddingAngle={2}
+                  startAngle={90}
+                  endAngle={-270}
                   label={({ share }) => `${share.toFixed(0)}%`}
                   labelLine={false}
                 >
@@ -282,6 +295,25 @@ export default function FinancialDashboardPage() {
                       }
                     />
                   ))}
+                  <Label
+                    position="center"
+                    content={(props) => {
+                      const { cx, cy } = props.viewBox || {}
+                      if (!cx || !cy) return null
+                      const total = revenueMixByBrand.reduce((sum, d) => sum + d.value, 0)
+                      const totalStr = total >= 1 ? `$${total.toFixed(1)}B` : `$${(total * 1000).toFixed(0)}M`
+                      return (
+                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+                          <tspan x={cx} dy="-0.4em" fontSize={12} fill="#6b7280">
+                            Total FY {selectedYear}
+                          </tspan>
+                          <tspan x={cx} dy="1.4em" fontSize={14} fontWeight={600} fill="#111827">
+                            {totalStr}
+                          </tspan>
+                        </text>
+                      )
+                    }}
+                  />
                 </Pie>
                 <Tooltip
                   contentStyle={{
@@ -295,92 +327,100 @@ export default function FinancialDashboardPage() {
                     return [valueStr, `${payload.name}: ${payload.share.toFixed(1)}%`]
                   }}
                 />
+                <Legend
+                  verticalAlign="bottom"
+                  align="center"
+                  iconType="circle"
+                  wrapperStyle={{ marginTop: 8, fontSize: 12 }}
+                  formatter={(value, entry) => {
+                    const entryData = revenueMixByBrand.find((d) => d.name === value)
+                    if (!entryData) return value
+                    const valueStr = entryData.value >= 1 ? `$${entryData.value.toFixed(1)}B` : `$${(entryData.value * 1000).toFixed(0)}M`
+                    return `${value}: ${valueStr} (${entryData.share.toFixed(1)}%)`
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
-            <div className="pie-chart-legend">
-              {revenueMixByBrand.map((entry, index) => {
-                const valueStr = entry.value >= 1 ? `$${entry.value.toFixed(1)}B` : `$${(entry.value * 1000).toFixed(0)}M`
-                return (
-                  <div key={entry.name} className="pie-chart-legend__item">
-                    <span
-                      className="pie-chart-legend__swatch"
-                      style={{
-                        backgroundColor:
-                          index === 0
-                            ? 'var(--sap-accent)'
-                            : index === 1
-                            ? '#38bdf8'
-                            : '#7dd3fc',
-                      }}
-                    />
-                    <span className="pie-chart-legend__text">
-                      {entry.name}: {valueStr} ({entry.share.toFixed(1)}%)
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
           </div>
         </ChartCard>
       </div>
 
       <div className="chart-grid">
         <ChartCard
-          title="Revenue Distribution by Brand"
-          subtitle={`Brand contribution to total revenue – Fiscal Year ${selectedYear}`}
+          title="Backlog and DSO by Brand"
+          subtitle={`Working capital view – Fiscal Year ${selectedYear}`}
+          className="backlog-dso-card"
         >
-          <div className="pie-chart-container">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={revenueDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                  outerRadius={75}
-                  innerRadius={0}
-                  paddingAngle={3}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {revenueDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={compactTooltip}
-                  formatter={(v, name, { payload }) => {
-                    const numValue = Number(v)
-                    const total = revenueDistribution.reduce((sum, d) => sum + d.value, 0)
-                    const percentage = total ? ((numValue / total) * 100).toFixed(1) : '0'
-                    const valueStr = numValue >= 1 ? `$${numValue.toFixed(1)}B` : `$${(numValue * 1000).toFixed(0)}M`
-                    return [valueStr, `${payload.name}: ${percentage}%`]
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pie-chart-legend">
-              {revenueDistribution.map((entry, index) => {
-                const total = revenueDistribution.reduce((sum, d) => sum + d.value, 0)
-                const share = total ? (entry.value / total) * 100 : 0
-                const valueStr = entry.value >= 1 ? `$${entry.value.toFixed(1)}B` : `$${(entry.value * 1000).toFixed(0)}M`
-                return (
-                  <div key={entry.name} className="pie-chart-legend__item">
-                    <span
-                      className="pie-chart-legend__swatch"
-                      style={{
-                        backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
-                      }}
-                    />
-                    <span className="pie-chart-legend__text">
-                      {entry.name}: {valueStr} ({share.toFixed(1)}%)
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+          <div className="kpi-legend kpi-legend--inline">
+            <span className="kpi-legend__item">
+              <span className="kpi-legend__dot kpi-legend__dot--backlog" />
+              Backlog (USD M)
+            </span>
+            <span className="kpi-legend__item">
+              <span className="kpi-legend__dot kpi-legend__dot--dso" />
+              DSO (days)
+            </span>
           </div>
+          <ResponsiveContainer width="100%" height={240}>
+            <ComposedChart
+              data={backlogAndDsoByBrand}
+              margin={{ top: 20, right: 36, left: 8, bottom: 8 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#edf1f5" vertical={false} />
+              <XAxis 
+                dataKey="brand" 
+                tick={{ fontSize: 12 }}
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+              />
+              <YAxis
+                yAxisId="left"
+                tick={{ fontSize: 12 }}
+                tickFormatter={(v) => `$${v}M`}
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+                width={60}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                domain={[30, 60]}
+                tick={{ fontSize: 11 }}
+                tickFormatter={(v) => `${v}d`}
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+                width={50}
+              />
+              <Tooltip
+                contentStyle={compactTooltip}
+                formatter={(value, name) => {
+                  if (name === 'Backlog (USD M)') {
+                    return [`$${value}M`, 'Backlog (USD M)']
+                  }
+                  return [`${value} days`, 'DSO (days)']
+                }}
+                labelFormatter={(label) => `Brand: ${label}`}
+              />
+              <Bar
+                yAxisId="left"
+                dataKey="backlogUSD"
+                name="Backlog (USD M)"
+                fill="#0b78c8"
+                barSize={48}
+                radius={[6, 6, 0, 0]}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="dsoDays"
+                name="DSO (days)"
+                stroke="#1aa3b8"
+                strokeWidth={2.5}
+                dot={{ r: 5, fill: '#1aa3b8', strokeWidth: 2, stroke: '#ffffff' }}
+                activeDot={{ r: 6, fill: '#1aa3b8' }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard
