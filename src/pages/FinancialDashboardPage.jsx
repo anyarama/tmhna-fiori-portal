@@ -9,6 +9,10 @@ import {
   LineChart,
   Line,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts'
 import {
   fiscalYears,
@@ -18,6 +22,7 @@ import {
   revenueByBrand,
   operatingMarginTrend,
   getFilteredData,
+  getRevenueDistribution,
 } from '../data/financialData.js'
 import { PageHeader } from '../components/PageHeader.jsx'
 import { FilterBar } from '../components/FilterBar.jsx'
@@ -70,10 +75,44 @@ export default function FinancialDashboardPage() {
     return quarters
   }, [selectedYear])
 
+  // Revenue mix by brand for donut chart
+  const revenueMixByBrand = useMemo(() => {
+    const yearData = revenueByBrand[selectedYear]
+    if (!yearData || !yearData.All) return []
+
+    const entries = Object.entries(yearData.All)
+    const total = entries.reduce((sum, [, value]) => sum + value, 0)
+
+    return entries.map(([brandName, value]) => ({
+      name: brandName,
+      value,
+      share: total ? (value / total) * 100 : 0,
+    }))
+  }, [selectedYear])
+
   const filteredMetrics = useMemo(
     () => getFilteredData(selectedYear, selectedBrand, selectedRegion),
     [selectedYear, selectedBrand, selectedRegion]
   )
+
+  // Revenue distribution for pie chart
+  const revenueDistribution = useMemo(() => {
+    return getRevenueDistribution(selectedYear, selectedBrand, selectedRegion)
+  }, [selectedYear, selectedBrand, selectedRegion])
+
+  // Top dealers by revenue for preview
+  const topDealers = useMemo(() => {
+    return [...filteredMetrics]
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5)
+      .map((dealer, index) => ({
+        rank: index + 1,
+        name: dealer.dealer,
+        brand: dealer.brand,
+        revenue: dealer.revenue,
+        margin: dealer.operatingMargin,
+      }))
+  }, [filteredMetrics])
 
   // Transform filteredMetrics to match expected table structure
   const tableRows = useMemo(() => {
@@ -88,6 +127,9 @@ export default function FinancialDashboardPage() {
       backlogRisk: metric.backlog > 40 ? 'High' : metric.backlog > 30 ? 'Medium' : 'Low',
     }))
   }, [filteredMetrics])
+
+  // Pie chart colors
+  const PIE_COLORS = ['#0b7fab', '#38bdf8', '#7dd3fc', '#bae6fd']
 
   return (
     <div className="dashboard-page">
@@ -143,7 +185,7 @@ export default function FinancialDashboardPage() {
         />
       </div>
 
-      <div className="chart-grid">
+      <div className="chart-grid chart-grid--three">
         <ChartCard
           title="Revenue by Brand"
           subtitle={`Unified brand view – TMH, Raymond, THD (Fiscal Year ${selectedYear})`}
@@ -208,6 +250,185 @@ export default function FinancialDashboardPage() {
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
+
+        <ChartCard
+          title="Revenue Mix by Brand"
+          subtitle={`Share of total revenue – Fiscal Year ${selectedYear}`}
+        >
+          <div className="pie-chart-container">
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={revenueMixByBrand}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={70}
+                  paddingAngle={3}
+                  label={({ share }) => `${share.toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {revenueMixByBrand.map((entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={
+                        index === 0
+                          ? 'var(--sap-accent)'
+                          : index === 1
+                          ? '#38bdf8'
+                          : '#7dd3fc'
+                      }
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    ...compactTooltip,
+                    fontSize: '12px',
+                    padding: '8px 12px',
+                  }}
+                  formatter={(value, _name, { payload }) => {
+                    const numValue = Number(value)
+                    const valueStr = numValue >= 1 ? `$${numValue.toFixed(1)}B` : `$${(numValue * 1000).toFixed(0)}M`
+                    return [valueStr, `${payload.name}: ${payload.share.toFixed(1)}%`]
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pie-chart-legend">
+              {revenueMixByBrand.map((entry, index) => {
+                const valueStr = entry.value >= 1 ? `$${entry.value.toFixed(1)}B` : `$${(entry.value * 1000).toFixed(0)}M`
+                return (
+                  <div key={entry.name} className="pie-chart-legend__item">
+                    <span
+                      className="pie-chart-legend__swatch"
+                      style={{
+                        backgroundColor:
+                          index === 0
+                            ? 'var(--sap-accent)'
+                            : index === 1
+                            ? '#38bdf8'
+                            : '#7dd3fc',
+                      }}
+                    />
+                    <span className="pie-chart-legend__text">
+                      {entry.name}: {valueStr} ({entry.share.toFixed(1)}%)
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </ChartCard>
+      </div>
+
+      <div className="chart-grid">
+        <ChartCard
+          title="Revenue Distribution by Brand"
+          subtitle={`Brand contribution to total revenue – Fiscal Year ${selectedYear}`}
+        >
+          <div className="pie-chart-container">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={revenueDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                  outerRadius={75}
+                  innerRadius={0}
+                  paddingAngle={3}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {revenueDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={compactTooltip}
+                  formatter={(v, name, { payload }) => {
+                    const numValue = Number(v)
+                    const total = revenueDistribution.reduce((sum, d) => sum + d.value, 0)
+                    const percentage = total ? ((numValue / total) * 100).toFixed(1) : '0'
+                    const valueStr = numValue >= 1 ? `$${numValue.toFixed(1)}B` : `$${(numValue * 1000).toFixed(0)}M`
+                    return [valueStr, `${payload.name}: ${percentage}%`]
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pie-chart-legend">
+              {revenueDistribution.map((entry, index) => {
+                const total = revenueDistribution.reduce((sum, d) => sum + d.value, 0)
+                const share = total ? (entry.value / total) * 100 : 0
+                const valueStr = entry.value >= 1 ? `$${entry.value.toFixed(1)}B` : `$${(entry.value * 1000).toFixed(0)}M`
+                return (
+                  <div key={entry.name} className="pie-chart-legend__item">
+                    <span
+                      className="pie-chart-legend__swatch"
+                      style={{
+                        backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
+                      }}
+                    />
+                    <span className="pie-chart-legend__text">
+                      {entry.name}: {valueStr} ({share.toFixed(1)}%)
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </ChartCard>
+
+        <ChartCard
+          title="Top 5 Dealers by Revenue"
+          subtitle={`Highest revenue dealers for selected filters – Fiscal Year ${selectedYear}`}
+        >
+          <div className="top-dealers-list">
+            {topDealers.map((dealer) => (
+              <div key={dealer.name} className="top-dealers-list__item">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <div
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--sap-accent-soft)',
+                      color: 'var(--sap-accent)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {dealer.rank}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--sap-text-main)' }}>
+                      {dealer.name}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--sap-text-muted)' }}>
+                      {dealer.brand}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', marginLeft: '16px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--sap-text-main)' }}>
+                    ${dealer.revenue.toFixed(1)}M
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--sap-text-muted)' }}>
+                    {dealer.margin.toFixed(1)}% margin
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ChartCard>
       </div>
 
       <ChartCard
@@ -215,39 +436,41 @@ export default function FinancialDashboardPage() {
         subtitle="Combined view of revenue, margin, and backlog by dealer"
         fullWidth
       >
-        <DataTable
-          columns={[
-            { key: 'dealerId', label: 'Dealer ID' },
-            { key: 'dealerName', label: 'Dealer Name' },
-            { key: 'brand', label: 'Brand' },
-            { key: 'region', label: 'Region' },
-            {
-              key: 'revenue',
-              label: 'Revenue (USD, M)',
-              align: 'right',
-              format: (v) => v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-            },
-            {
-              key: 'operatingMargin',
-              label: 'Operating Margin (%)',
-              align: 'right',
-              format: (v) => Number(v).toFixed(1),
-            },
-            {
-              key: 'backlog',
-              label: 'Backlog (USD, M)',
-              align: 'right',
-              format: (v) => v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-            },
-            {
-              key: 'backlogRisk',
-              label: 'Backlog Risk',
-            },
-          ]}
-          rows={tableRows}
-        />
-        <p className="page-footnote" style={{ marginTop: '16px', marginBottom: 0 }}>
-          Illustrative dealer-level view powered by the same unified financial data model used in the dashboards.
+        <div className="data-table-wrapper">
+          <DataTable
+            columns={[
+              { key: 'dealerId', label: 'Dealer ID' },
+              { key: 'dealerName', label: 'Dealer Name' },
+              { key: 'brand', label: 'Brand' },
+              { key: 'region', label: 'Region' },
+              {
+                key: 'revenue',
+                label: 'Revenue (USD, M)',
+                align: 'right',
+                format: (v) => v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+              },
+              {
+                key: 'operatingMargin',
+                label: 'Operating Margin (%)',
+                align: 'right',
+                format: (v) => Number(v).toFixed(1),
+              },
+              {
+                key: 'backlog',
+                label: 'Backlog (USD, M)',
+                align: 'right',
+                format: (v) => v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+              },
+              {
+                key: 'backlogRisk',
+                label: 'Backlog Risk',
+              },
+            ]}
+            rows={tableRows}
+          />
+        </div>
+        <p className="table-footnote">
+          Illustrative dealer-level view powered by the same unified financial data foundation used in the dashboards.
         </p>
       </ChartCard>
     </div>
