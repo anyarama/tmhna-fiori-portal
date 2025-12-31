@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './hooks/useAuth.js'
 import { AppLayout } from './layout/AppLayout.jsx'
 import { ProtectedRoute } from './components/ProtectedRoute.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -7,6 +8,16 @@ import FinancialDashboardPage from './pages/FinancialDashboardPage.jsx'
 import DealerAnalyticsPage from './pages/DealerAnalyticsPage.jsx'
 
 function App() {
+  const { isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="auth-loading">
+        <div className="auth-loading__spinner">Loading...</div>
+      </div>
+    )
+  }
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

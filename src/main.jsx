@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom'
 import './styles/global.css'
 import App from './App.jsx'
 
+console.log('App is loading...', import.meta.env.BASE_URL)
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter basename={import.meta.env.BASE_URL}>
