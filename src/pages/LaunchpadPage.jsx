@@ -17,7 +17,8 @@ import {
 import { kpiData } from '../data/financialData.js'
 import { compactTooltip } from '../lib/charts.js'
 import { PageHeader } from '../components/PageHeader.jsx'
-import newsImage from '/shutterstock_2560233213.jpg'
+
+const newsImage = `${import.meta.env.BASE_URL}shutterstock_2560233213.jpg`
 
 function HomeSection({ title, children, className = '' }) {
   return (
