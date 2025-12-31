@@ -71,10 +71,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px;
+  padding: 12px 8px;
   background: var(--sap-shell-bg);
   color: #f9fafb;
-  min-height: 56px;
+  min-height: 64px;
   gap: 16px;
   position: sticky;
   top: 0;
@@ -114,7 +114,7 @@ body {
 }
 
 .sap-logo {
-  height: 65px;
+  height: 80px;
   width: auto;
   display: block;
 }
